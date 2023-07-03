@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <driver/gpio.h>
 
 #include "qcloud_iot_export.h"
 #include "qcloud_iot_import.h"
@@ -33,6 +34,8 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+#define LED_PIN 2  // 示例中使用引脚2作为LED控制引脚
 
 #ifdef AUTH_MODE_CERT
 static char sg_cert_file[PATH_MAX + 1];  // full path of device cert file
@@ -45,6 +48,8 @@ typedef struct {
     uint16_t color;
     char     device_name[MAX_SIZE_OF_DEVICE_NAME + 1];
 } LedInfo;
+
+char msg[2048] = "this is a test msg";
 
 static DeviceInfo sg_devInfo;
 static LedInfo    sg_led_info;
@@ -208,15 +213,18 @@ static void property_report(void *pClient)
     sg_report_index++;
     message_len = HAL_Snprintf(message, sizeof(message),
                                "{\"method\":\"report\", \"clientToken\":\"%s-%d\", "
-                               "\"params\":{\"power_switch\":%d, \"color\":%d, \"brightness\":%d, \"name\":\"%s\"}}",
+                               "\"params\":{\"power_switch\":%d, \"color\":%d, \"brightness\":%d, \"name\":\"%s\", \"msg\":\"%s\"}}",
                                sg_devInfo.product_id, sg_report_index, sg_led_info.power_off, sg_led_info.color,
-                               sg_led_info.brightness, sg_devInfo.device_name);
+                               sg_led_info.brightness, sg_devInfo.device_name, msg);
     // only change the brightness in the demo
     sg_led_info.brightness %= 100;
     sg_led_info.brightness++;
     property_topic_publish(pClient, message, message_len);
 }
 
+/**
+* get the resp param from cloud
+*/
 static void property_control_handle(void *pClient, const char *token, const char *control_data)
 {
     char *params         = NULL;
@@ -234,7 +242,20 @@ static void property_control_handle(void *pClient, const char *token, const char
         property_param = LITE_json_value_of(sg_property_name[i], params);
         if (NULL != property_param) {
             Log_i("\t%-16s = %-10s", sg_property_name[i], property_param);
-            if (i == 1) {
+            if (i == 0) {// i==2对应的sg_property_name[i]为power_switch
+            	sg_led_info.power_off = atoi(property_param);
+            	gpio_config_t io_conf;
+            	// 配置引脚为输出模式
+            	io_conf.pin_bit_mask = (1ULL << LED_PIN);
+            	io_conf.mode = GPIO_MODE_OUTPUT;
+            	io_conf.intr_type = GPIO_INTR_DISABLE;
+            	io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+            	io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+            	gpio_config(&io_conf);
+	        // 设置引脚电平
+	        gpio_set_level(LED_PIN, sg_led_info.power_off);
+            }
+            else if (i == 1) {// i==1对应的sg_property_name[i]为brightness
                 // only change the brightness in the demo
                 sg_led_info.brightness = atoi(property_param);
             }

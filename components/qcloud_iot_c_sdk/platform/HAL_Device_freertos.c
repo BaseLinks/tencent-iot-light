@@ -35,17 +35,17 @@
 
 #ifdef DEBUG_DEV_INFO_USED
 /* product Id  */
-static char sg_product_id[MAX_SIZE_OF_PRODUCT_ID + 1] = "YOUR_PRODUCT_ID";
+static char sg_product_id[MAX_SIZE_OF_PRODUCT_ID + 1] = "U7RHZDB2F6";
 
 /* device name */
-static char sg_device_name[MAX_SIZE_OF_DEVICE_NAME + 1] = "YOUR_DEVICE_NAME";
+static char sg_device_name[MAX_SIZE_OF_DEVICE_NAME + 1] = "led_123";
 
 /* region */
 static char sg_region[MAX_SIZE_OF_REGION + 1] = "ap-guangzhou";
 
 #ifdef DEV_DYN_REG_ENABLED
 /* product secret for device dynamic Registration  */
-static char sg_product_secret[MAX_SIZE_OF_PRODUCT_SECRET + 1] = "YOUR_PRODUCT_SECRET";
+static char sg_product_secret[MAX_SIZE_OF_PRODUCT_SECRET + 1] = "iTrAT66wCUaJn9yw2b9sxML2";
 #endif
 
 #ifdef AUTH_MODE_CERT
@@ -55,7 +55,7 @@ static char sg_device_cert_file_name[MAX_SIZE_OF_DEVICE_CERT_FILE_NAME + 1] = "Y
 static char sg_device_privatekey_file_name[MAX_SIZE_OF_DEVICE_SECRET_FILE_NAME + 1] = "YOUR_DEVICE_NAME_private.key";
 #else
 /* device secret of PSK device YOUR_IOT_PSK */
-static char sg_device_secret[MAX_SIZE_OF_DEVICE_SECRET + 1] = "YOUR_IOT_PSK";
+static char sg_device_secret[MAX_SIZE_OF_DEVICE_SECRET + 1] = "o0OtTRJ2+JZGabTHEq37XA==";
 #endif
 
 #ifdef GATEWAY_ENABLED
