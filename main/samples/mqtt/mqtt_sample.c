@@ -204,6 +204,9 @@ static void property_get_status(void *pClient)
     property_topic_publish(pClient, message, message_len);
 }
 
+/**
+ * 这个是上报当前状态
+*/
 static void property_report(void *pClient)
 {
     char       message[256]    = {0};
@@ -219,11 +222,11 @@ static void property_report(void *pClient)
     // only change the brightness in the demo
     sg_led_info.brightness %= 100;
     sg_led_info.brightness++;
-    property_topic_publish(pClient, message, message_len);
+    property_topic_publish(pClient, message, message_len);	//上行
 }
 
 /**
-* get the resp param from cloud
+* 这个会接收用户的指令，control_data中包含各种要修改的结果
 */
 static void property_control_handle(void *pClient, const char *token, const char *control_data)
 {
@@ -244,6 +247,7 @@ static void property_control_handle(void *pClient, const char *token, const char
             Log_i("\t%-16s = %-10s", sg_property_name[i], property_param);
             if (i == 0) {// i==2对应的sg_property_name[i]为power_switch
             	sg_led_info.power_off = atoi(property_param);
+                // 这里将来可以封装成一个修改对应引脚电平的函数
             	gpio_config_t io_conf;
             	// 配置引脚为输出模式
             	io_conf.pin_bit_mask = (1ULL << LED_PIN);
@@ -252,8 +256,12 @@ static void property_control_handle(void *pClient, const char *token, const char
             	io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
             	io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
             	gpio_config(&io_conf);
-	        // 设置引脚电平
-	        gpio_set_level(LED_PIN, sg_led_info.power_off);
+                // 设置引脚电平
+                gpio_set_level(LED_PIN, sg_led_info.power_off);
+	        
+                // 五秒后提交，这样写就会在灯状态修改后返回状态
+                HAL_SleepMs(5000);
+                property_report(pClient);
             }
             else if (i == 1) {// i==1对应的sg_property_name[i]为brightness
                 // only change the brightness in the demo
@@ -513,7 +521,7 @@ int qcloud_iot_explorer_demo(eDemoType eType)
             HAL_SleepMs(1000);
 
         // method: report
-        property_report(client);
+        // property_report(client);// 取消掉这个注释就会循环发送，这会导致用户的开关灯的命令发送后，设备在接收之前发送了修改之前的状态，这会出现开关按钮自动切换回去的情况
     } while (sg_loop_test);
     rc = IOT_Unbind_Device_Request(client, 5000);
     if (rc != QCLOUD_RET_SUCCESS) {
